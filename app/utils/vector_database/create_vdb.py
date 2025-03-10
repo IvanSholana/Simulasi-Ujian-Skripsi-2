@@ -4,8 +4,8 @@ from typing import Any, Optional
 from langchain_chroma import Chroma
 import chromadb
 from chromadb.config import Settings
-from utils.vector_database.expand_query import expand_query
-from utils.vector_database.retrieve_and_rerank_doc import retrieve_top_chunks
+from app.utils.vector_database.expand_query import expand_query
+from app.utils.vector_database.retrieve_and_rerank_doc import retrieve_top_chunks
 
 class VectorDatabase:
     """A class to manage vector database operations using Chroma."""

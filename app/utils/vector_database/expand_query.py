@@ -1,5 +1,5 @@
-from utils.ai_agent.llm_instance import LLMInstance
-from static.prompts.expand_query import expansion_prompt
+from app.utils.ai_agent.llm_instance import LLMInstance
+from app.static.prompts.expand_query import expansion_prompt
 import json
 
 def expand_query(main_query:str):
