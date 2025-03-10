@@ -1,7 +1,7 @@
 import os
 from pydantic import BaseModel
 from fastapi import FastAPI
-from utils.ai_agent.llm_agent import ai_response
+from utils.ai_agent.llm_instance import ai_response
 
 app = FastAPI()
 

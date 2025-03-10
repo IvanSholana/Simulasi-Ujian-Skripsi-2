@@ -4,6 +4,8 @@ from typing import Any, Optional
 from langchain_chroma import Chroma
 import chromadb
 from chromadb.config import Settings
+from utils.vector_database.expand_query import expand_query
+from utils.vector_database.retrieve_and_rerank_doc import retrieve_top_chunks
 
 class VectorDatabase:
     """A class to manage vector database operations using Chroma."""
@@ -13,6 +15,8 @@ class VectorDatabase:
     def __init__(
         self, 
         collection_name: str,
+        document: Any,
+        embeddings: Any,
         persist_directory: Optional[Path] = None,
         client_settings: Optional[dict] = None
     ):
@@ -29,6 +33,7 @@ class VectorDatabase:
         
         # Initialize client and setup storage
         self._initialize_storage()
+        self.vector_db = self._create_vector_database(document=document,embeddings=embeddings)
         
     def _initialize_storage(self) -> None:
         """Initialize storage and client configuration."""
@@ -56,7 +61,7 @@ class VectorDatabase:
             metadata={"hnsw:space": "l2"}
         )
             
-    def create_vector_database(
+    def _create_vector_database(
         self,
         document: Any,
         embeddings: Any,
@@ -78,42 +83,20 @@ class VectorDatabase:
             raise ValueError("Document must have 'splited_document' attribute")
             
         vector_db = Chroma.from_documents(
-            documents=document.splited_document,
+            documents=document.splited_document,  # Assuming 'document' is defined elsewhere
             embedding=embeddings,
-                        persist_directory=str(self.persist_directory),
-            collection_name=self.collection_name,
             client=self.client,
-            distance_metric=distance_metric,
-            max_connections=max_connections
+            collection_name=self.collection_name,
+            collection_metadata={
+                "hnsw:space": distance_metric,           # Distance metric (L2, like Milvus/Qdrant defaults)
+                "hnsw:M": max_connections,                 # Max connections per layer
+            },
+            ids=[f"{doc.metadata['source']}_page_{doc.metadata['page']}" for doc in document.splited_document]
         )
         
         return vector_db
-    
-    def add_documents(self, documents: Any, embeddings: Any) -> None:
-        """Add documents to the vector database.
 
-        Args:
-            documents: Preprocessed documents containing splited_document
-            embeddings: OpenAIEmbeddings instance
-        """
-        if not hasattr(documents, 'splited_document'):
-            raise ValueError("Documents must have 'splited_document' attribute")
-        
-        # Ekstrak page_content dari setiap Document
-        text_list = [doc.page_content for doc in documents.splited_document]
-        
-        # Dapatkan embeddings dari daftar teks
-        embeddings_list = embeddings.embed_documents(text_list)
-
-        # Tambahkan ke koleksi vektor dengan text_list
-        collection = self.client.get_collection(name=self.collection_name)
-        collection.add(
-            ids=[str(i) for i in range(len(documents.splited_document))],
-            documents=text_list,  # Gunakan text_list, bukan documents.splited_document
-            embeddings=embeddings_list
-        )
-
-    def search(self, query: str, embeddings: Any, k: int = 5):
+    def search(self, query: str, k: int = 5):
         """Search for similar vectors in the database.
 
         Args:
@@ -124,6 +107,15 @@ class VectorDatabase:
         Returns:
             List of search results
         """
-        collection = self.client.get_collection(name=self.collection_name)
-        query_vector = embeddings.embed(query)
-        return collection.query(query_vector, n_results=k)
+        
+        expanded_query = expand_query(query)
+        
+        retriever = self.vector_db.as_retriever(
+        search_type="mmr",
+        search_kwargs={"k": k, "lambda_mult": 0.5})
+        
+        top_chunks = retrieve_top_chunks(query=query, alt_queries=expanded_query, retriever=retriever)
+        
+        joined_chunk = "\n\n".join([doc.page_content for doc in top_chunks[0:5]])
+        
+        return joined_chunk
