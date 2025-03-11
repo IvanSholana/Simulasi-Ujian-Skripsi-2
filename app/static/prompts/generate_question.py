@@ -8,14 +8,15 @@ QUERY: {query}
 JUDUL PENELITIAN: {title}
 KUTIPAN REFERENSI: {context}
 
-Format Output:
-- Hasilkan output dalam format JSON yang valid.
-- Output harus berisi **hanya** JSON, tanpa tambahan teks, komentar, atau informasi lain.
-- JSON harus memiliki struktur persis sebagai berikut (tanpa karakter tambahan seperti spasi, baris baru, atau keterangan lain):
+PERINCIAN OUTPUT:
+- Hasilkan output hanya dalam format JSON yang valid.
+- Tidak boleh ada teks, komentar, spasi ekstra, atau karakter lain sebelum atau sesudah objek JSON.
+- JSON harus memiliki struktur persis seperti berikut (tanpa tambahan spasi, baris baru, atau karakter lainnya):
 
-{{
-    "question": "..."
-}}
+{{"question": "..."}}
 
-- Pastikan bahwa nilai dari "question" adalah string yang mewakili pertanyaan yang diminta.
+Pastikan bahwa:
+1. Output hanya mengandung satu objek JSON yang valid.
+2. Nilai dari "question" adalah string yang mewakili pertanyaan yang diminta.
+3. Tidak ada teks tambahan, penjelasan, atau karakter non-JSON lainnya.
 """

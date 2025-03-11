@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulasi Sidang Skripsi Berbasis AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <script
+      src="https://kit.fontawesome.com/a076d05399.js"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 flex items-center justify-center h-screen"
+  >
+    <div class="bg-white shadow-2xl rounded-xl p-8 max-w-md w-full text-center">
+      <h1 class="text-3xl font-extrabold mb-4 text-gray-800">
+        <i class="fas fa-robot text-teal-500"></i> Simulasi Sidang Skripsi
+        <br />
+        Berbasis AI
+      </h1>
+      <p class="text-gray-600 text-sm italic mb-6">
+        "Unggah dokumen skripsi Anda dalam format PDF yang mencakup abstrak
+        untuk melanjutkan simulasi."
+      </p>
+
+      {% if blocked %}
+      <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+        <h2 class="font-bold text-lg">Sorry, you have been blocked</h2>
+        <p>This website is using a security service to protect itself from online attacks. The action you just performed triggered the security solution. There are several actions that could trigger this block including submitting a certain word or phrase, a SQL command or malformed data.</p>
+        <p>You can email the site owner to let them know you were blocked. Please include what you were doing when this page came up and the Cloudflare Ray ID: <span id="ray-id">{{ ray_id }}</span></p>
+      </div>
+      {% else %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4">
+            {% for category, message in messages %}
+              <div class="text-sm text-{{ 'green' if category == 'success' else 'red' }}-600">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form
+        action="/upload"
+        method="POST"
+        enctype="multipart/form-data"
+        class="space-y-4 text-left"
+      >
+        <label for="file" class="text-sm text-gray-700 font-semibold">
+          Pilih dokumen skripsi Anda:
+        </label>
+        <input
+          type="file"
+          name="file"
+          id="file"
+          accept="application/pdf"
+          class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          required
+        />
+        <button
+          type="submit"
+          class="bg-teal-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-600 w-full mt-4 flex items-center justify-center"
+        >
+          <i class="fas fa-upload mr-2"></i> Unggah Dokumen
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </body>
+</html>
