@@ -28,6 +28,7 @@ if (SpeechRecognition) {
     startButton.disabled = false;
     stopButton.disabled = true;
     convertText.placeholder = "Voice recognition stopped.";
+    console.log("Voice recognition stopped")
 
     // Send the transcribed text to the /evaluasi page
     submitAnswer(finalTranscript);
@@ -93,3 +94,34 @@ fetch("/save_transcription", {
     console.error("Error:", error);
     alert("Gagal memproses simulasi. Silakan coba lagi.");
   });
+
+  function submitAnswer(finalTranscript) {
+    const studentAnswer = finalTranscript; // Ambil teks dari textarea
+  
+    // Mengirim data ke server menggunakan Fetch API
+    fetch("/save_transcription", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json", // Mengirim sebagai JSON
+      },
+      body: JSON.stringify({ student_answer: studentAnswer }), // Format JSON
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json(); // Parse JSON jika berhasil
+        }
+        throw new Error("Terjadi kesalahan saat menyimpan jawaban.");
+      })
+      .then((data) => {
+        console.log("Response dari server:", data);
+        alert("Jawaban berhasil disimpan!, mengahilkan ke simulasi baru");
+  
+        // Redirect ke halaman /start_simulation
+        window.location.href = "/start_simulation";
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Gagal menyimpan jawaban. Silakan coba lagi.");
+      });
+  }
+  

@@ -9,6 +9,7 @@ import random
 from app.utils.audio.text_to_speech import AudioManagement
 import json
 import datetime
+from app.static.prompts.evaluation_answer import evaluation_answer_prompt
 
 class LLM_Agent:
     embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
@@ -33,5 +34,30 @@ class LLM_Agent:
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         file_name = f"audio_question_{timestamp}.mp3"
         
-        self.audio_question_path = self.audio_convert.text_to_speech(file_name=file_name, text=self.question)
-        return self.audio_question_path
+        audio_question_path = self.audio_convert.text_to_speech(file_name=file_name, text=self.question)
+        return audio_question_path
+    
+    def evaluation_answer(self,student_answer):
+        current_question = self.question
+        evaluation_result = self.model.invoke(evaluation_answer_prompt.format(question=current_question,answer=student_answer))
+        result = json.loads(evaluation_result)
+        quality_answer = result['penilaian']
+        quality_reason = result['alasan']
+        
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        file_name = f"audio_evaluation_{timestamp}.mp3"
+        
+        if quality_answer == 'kurang':
+            audio_question_path = self.audio_convert.text_to_speech(file_name=file_name, text=quality_reason)
+        
+            return {
+                'quality_answer' : quality_answer, 
+                'quality_reason' : quality_reason,
+                'audio_url' : audio_question_path
+                }
+            
+        elif quality_answer == 'cukup':
+            return {
+                'quality_answer' : quality_answer
+                }
+        
