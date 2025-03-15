@@ -13,7 +13,7 @@ Gunakan pendekatan Tree-of-Thought (ToT) untuk mengeksplorasi alternatif evaluas
 Format Output:
 Hasil evaluasi harus disajikan dalam format JSON murni seperti berikut (tanpa tambahan teks atau karakter lain):
 
-{ "penilaian": "cukup/kurang", "alasan": "..." }
+{{ "penilaian": "cukup/kurang", "alasan": "..." }}
 
 Input Data:
 

@@ -6,6 +6,10 @@ import json
 from app.utils.ai_agent.llm_instance import LLMInstance
 from app.static.prompts.evaluation_answer import evaluation_answer_prompt
 
+# Konfigurasi logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # app = Flask(__name__)
 app = Flask(__name__, static_folder='app/static') # Use this if you rename the static folder
 
@@ -20,8 +24,8 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 def index():
     return render_template('upload.html')
 
-global filepath
-global llm_agent
+filepath = None
+llm_agent  = None
 
 # Route untuk menangani unggah PDF
 @app.route('/upload', methods=['POST'])
@@ -38,51 +42,47 @@ def upload_file():
         return redirect(url_for('simulation')) # Redirect ke halaman simulasi
     return 'File harus berformat PDF', 400
 
-@app.route('/save_transcription', method=['POST'])
+# Route untuk menyimpan transkripsi
+@app.route('/save_transcription', methods=['POST'])
 def save_transcription():
-    # Ambil data JSON dari request
+    """Menyimpan transkripsi jawaban siswa ke file JSON."""
     data = request.get_json()
     if not data or 'student_answer' not in data:
-        logging.error("Invalid request data: Missing 'student_answer'")
-        return jsonify({"error": "Missing 'student_answer' key in request data"}), 400
+        logger.error("Invalid request data: Missing 'student_answer'")
+        return jsonify({"error": "Missing 'student_answer' key"}), 400
     
     student_answer = data['student_answer']
-    
-    # Lokasi file JSON
     file_path = "transcriptions/student_answer.json"
-
+    
     # Pastikan folder ada
     folder_path = os.path.dirname(file_path)
     if not os.path.exists(folder_path):
-        logging.info(f"Creating directory for path: {folder_path}")
+        logger.info(f"Membuat direktori: {folder_path}")
         os.makedirs(folder_path)
-        
-    # Jika file ada, baca dan tambahkan data baru
+    
+    # Baca data yang ada
     existing_data = []
     if os.path.exists(file_path):
-        logging.info("File found, reading existing data")
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 existing_data = json.load(file)
-            # Pastikan existing_data adalah list
             if not isinstance(existing_data, list):
-                logging.warning("Existing data is not a list, reinitializing as empty list.")
+                logger.warning("Data bukan list, diinisialisasi ulang")
                 existing_data = []
         except json.JSONDecodeError:
-            logging.warning("JSON file is corrupted or empty, reinitializing as empty list.")
+            logger.warning("File JSON rusak, diinisialisasi ulang")
             existing_data = []
-    else:
-        logging.info("File not found, initializing new file.")
-
-    # Tambahkan transkripsi baru ke data yang ada
-    existing_data.append({"student_answer": student_answer})
-    logging.info("Appending new transcription to data.")
-
-    # Simpan kembali ke file JSON
-    with open(file_path, 'w', encoding='utf-8') as file:
-        json.dump(existing_data, file, indent=4, ensure_ascii=False)
-    logging.info("Data saved successfully.")
     
+    # Tambahkan transkripsi baru
+    existing_data.append({"student_answer": student_answer})
+    try:
+        with open(file_path, 'w', encoding='utf-8') as file:
+            json.dump(existing_data, file, indent=4, ensure_ascii=False)
+        logger.info("Transkripsi berhasil disimpan")
+        return jsonify({"message": "Transcription saved"}), 200
+    except Exception as e:
+        logger.error(f"Gagal menyimpan transkripsi: {str(e)}")
+        return jsonify({"error": "Failed to save transcription"}), 500
 
 @app.route('/start_simulation')
 def start_simulation():
@@ -110,9 +110,8 @@ def start_simulation():
         logging.info(f"Received latest student_answer: {latest_transcription}")
         
         latest_answer = latest_transcription['student_answer']
-        latest_question = latest_transcription['question']
         
-        return redirect(url_for('evaluation_answer', latest_answer=latest_answer,latest_question=latest_question))
+        return redirect(url_for('evaluation_answer', latest_answer=latest_answer))
 
     except json.JSONDecodeError as e:
         logging.error(f"JSON decode error: {str(e)}")
@@ -150,7 +149,7 @@ def evaluation_answer():
     latest_answer = request.args.get('latest_answer')
     
     # Evaluasi jawaban menggunakan agent
-    result = llm_agent.evaluation_answer()
+    result = llm_agent.evaluation_answer(student_answer=latest_answer)
     
     print(f'Evaluation result : {result}')
 

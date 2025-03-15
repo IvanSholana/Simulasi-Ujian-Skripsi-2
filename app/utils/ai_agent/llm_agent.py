@@ -22,6 +22,7 @@ class LLM_Agent:
         self.list_of_query = json.loads(self.list_of_query)
         self.title = document_path
         self.audio_convert = AudioManagement()
+        self.question = ""
     
     def create_question(self):
         random_index = random.randint(0, len(self.list_of_query) - 1)
@@ -41,6 +42,8 @@ class LLM_Agent:
         current_question = self.question
         evaluation_result = self.model.invoke(evaluation_answer_prompt.format(question=current_question,answer=student_answer))
         result = json.loads(evaluation_result)
+        print(result)
+        
         quality_answer = result['penilaian']
         quality_reason = result['alasan']
         
